@@ -1,0 +1,5 @@
+{
+  "name": "agent-workflow",
+  "description": "Light path and plan path for code changes: task worktrees, roles, one independent review, merge with a review record, resource locks.",
+  "version": "0.1.0"
+}
