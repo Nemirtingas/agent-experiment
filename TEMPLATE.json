@@ -1,0 +1,6 @@
+{
+  "name": "agent-repo-template-generic",
+  "version": 3,
+  "kind": "installation-package",
+  "runtime_schema_version": 1
+}

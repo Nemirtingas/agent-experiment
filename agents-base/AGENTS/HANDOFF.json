@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "plan_id": null,
+  "route": null,
+  "state": "Drafting",
+  "resume_state": null,
+  "lead": null,
+  "proposal": {
+    "attempt": null,
+    "branch": null,
+    "worktree": null,
+    "draft_commit": null,
+    "approved_blob": null
+  },
+  "source_snapshot": {
+    "commit": null,
+    "remote": null,
+    "fetched_at": null,
+    "offline_decision": null
+  },
+  "context": {
+    "instructions_commit": null,
+    "used_files_sha256": {},
+    "bootstrap": {
+      "path": null,
+      "sha256": null
+    },
+    "preferences": {
+      "path": null,
+      "sha256": null
+    }
+  },
+  "plan": {
+    "path": null,
+    "commit": null,
+    "repo_path": null,
+    "blob": null
+  },
+  "code": {
+    "branch": null,
+    "worktree": null,
+    "base": null,
+    "head": null,
+    "submission_clean": false
+  },
+  "agents": {
+    "planner": null,
+    "developer": null,
+    "reviewer": null
+  },
+  "authorizations": [],
+  "evidence": [],
+  "review": {
+    "result_path": null,
+    "approved_head": null,
+    "approved_plan_blob": null,
+    "open_required_ids": []
+  },
+  "integration": {
+    "mode": null,
+    "commit": null,
+    "checkpoint": null
+  },
+  "blocker": null,
+  "next_action": null,
+  "reservations": [],
+  "adapter": {},
+  "proposal_history": []
+}
