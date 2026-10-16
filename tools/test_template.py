@@ -70,14 +70,15 @@ def fixture(parent, bare=False, configured=True, orphan=True):
             "AGENT_BASE": str(base), "Integration branch": "integration", "Authoritative remote": "None",
             "Release branches": "None", "Sensitive and generated paths": "None",
             "Shared resources and constraints": "None", "Multi-machine distribution and backup": "Single host",
+            "Project coding rules": "[PROJECT_CODING.md](PROJECT_CODING.md)",
         }
-        path = base / "AGENTS/PROJECT.md"
+        path = base / "AGENTS/PROJECT/PROJECT_CONFIG.md"
         text = path.read_text()
         for key, value in config.items():
             text = re.sub(r"^- " + re.escape(key) + r":.*$", lambda m, k=key, v=value: f"- {k}: {v}",
                           text, flags=re.MULTILINE)
         path.write_text(text)
-        coding = base / "AGENTS/CODING.md"
+        coding = base / "AGENTS/PROJECT/PROJECT_CODING.md"
         coding.write_text(coding.read_text().replace("Not configured.", "None").replace("Not configured", "None"))
     commit(base, "AGENTS.md", "README.md", "AGENTS_custom.example.md", ".gitignore", "AGENTS", "tools")
     return root, code, base, tree_parent

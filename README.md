@@ -171,8 +171,9 @@ git -C "$AGENT_BASE" status --short
 cp -R "$TEMPLATE_DIR/agents-base/." "$AGENT_BASE/"
 ```
 
-The branch output must be `agents-base`. Review and configure `AGENTS/PROJECT.md` and `AGENTS/CODING.md` using
-repository evidence before implementation. Record absolute paths, the actual integration branch, release branches
+The branch output must be `agents-base`. Keep `AGENTS/PROJECT.md` and `AGENTS/CODING.md` generic; configure
+`AGENTS/PROJECT/PROJECT_CONFIG.md` and `AGENTS/PROJECT/PROJECT_CODING.md` using repository evidence before implementation.
+Record absolute paths, the actual integration branch, release branches
 or `None`, authoritative remote/upstream information, supported platforms, project constraints, and verification
 commands. Use plain values without Markdown quoting/trailing punctuation in setting lines. `Not configured` means
 setup is incomplete, not optional. Use explicit `Authoritative remote: None` for a local-only repository.

@@ -1,6 +1,7 @@
 # Planner
 
-Read brief, assigned source snapshot, plan template and CODING.md verification/platform sections. Inspect source
+Read brief, assigned source snapshot, plan template, CODING.md and the project coding file's verification/platform
+sections referenced by PROJECT/PROJECT_CONFIG.md. Inspect source
 read-only; Git/lifecycle belongs to Lead. Compact Lead performs this role in the existing context.
 
 Write once to assigned proposal worktree's AGENTS/PLANS/PENDING_PLANS/<plan-id>.md. Without it, return decisions/

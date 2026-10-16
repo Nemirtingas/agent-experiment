@@ -1,6 +1,6 @@
 # Git coordination — Lead, load on demand
 
-Use PROJECT.md settings and EXECUTION.md reservations. Preserve unrelated work; never switch/reset/clean it.
+Use PROJECT/PROJECT_CONFIG.md settings loaded through PROJECT.md and EXECUTION.md reservations. Preserve unrelated work; never switch/reset/clean it.
 
 ## Identity and retry
 

@@ -1,0 +1,7 @@
+/AGENTS_custom.md
+# Local agent caches; never commit generated session data.
+/.agent-cache/
+# A shared local exclude may ignore the common-root bootstrap, but this canonical file must be tracked.
+!/AGENTS.md
+__pycache__/
+*.pyc

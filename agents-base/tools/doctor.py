@@ -18,6 +18,26 @@ def git(cwd, *args):
     return result.returncode, result.stdout.strip()
 
 
+def project_coding_path(base, reference):
+    """Resolve the configured Markdown link inside the canonical worktree."""
+    match = re.match(r"^\[[^\]]+\]\(([^)]+)\)(?:\s.*)?$", reference)
+    if not match:
+        raise ValueError("Project coding rules must be a relative Markdown file link.")
+    relative = Path(match.group(1))
+    path = (base / "AGENTS/PROJECT" / relative).resolve()
+    if relative.is_absolute() or not path.is_relative_to(base.resolve()):
+        raise ValueError("Project coding rules must resolve inside canonical AGENT_BASE.")
+    if path in ((base / "AGENTS/CODING.md").resolve(), (base / "AGENTS/PROJECT.md").resolve(),
+                (base / "AGENTS/PROJECT/PROJECT_CONFIG.md").resolve()):
+        raise ValueError("Project coding rules must reference a separate project file.")
+    if not path.is_file():
+        raise ValueError("Referenced project coding file is missing: " + str(path))
+    name = path.relative_to(base.resolve()).as_posix()
+    if git(base, "ls-files", "--error-unmatch", "--", name)[0]:
+        raise ValueError("Project coding file is not tracked: " + name)
+    return path
+
+
 def diagnose(workspace, code_worktree=None):
     root = Path(workspace).resolve()
     report = {"status": "incomplete", "workspace": str(root), "errors": [], "warnings": []}
@@ -82,7 +102,7 @@ def diagnose(workspace, code_worktree=None):
     if rc or base not in registered_paths:
         errors.append("Canonical worktree is not registered in its repository.")
 
-    required = ["AGENTS.md", "AGENTS/PROJECT.md", "AGENTS/CODING.md", "AGENTS/WORKFLOW.md",
+    required = ["AGENTS.md", "AGENTS/PROJECT.md", "AGENTS/PROJECT/PROJECT_CONFIG.md", "AGENTS/CODING.md", "AGENTS/WORKFLOW.md",
                 "AGENTS/EXECUTION.md", "AGENTS/HANDOFF.json", "AGENTS/REVIEW.json",
                 "AGENTS/PLANS/README.md", "AGENTS/PLANS/TEMPLATE.md"]
     required += ["AGENTS/ROLES/" + role + ".md" for role in ("LEAD", "PLANNER", "DEVELOPER", "REVIEWER")]
@@ -102,8 +122,9 @@ def diagnose(workspace, code_worktree=None):
 
     settings = {}
     coding_settings = set()
-    for name in ("PROJECT.md", "CODING.md"):
-        path = base / "AGENTS" / name
+    settings_paths = [base / "AGENTS/PROJECT/PROJECT_CONFIG.md"]
+    for path in settings_paths:
+        name = path.relative_to(base).as_posix()
         if not path.is_file():
             continue
         for line in path.read_text(encoding="utf-8").splitlines():
@@ -112,10 +133,15 @@ def diagnose(workspace, code_worktree=None):
                 key, value = match.groups()
                 if "Not configured" in value or not value or re.search(r"<[^>]+>", value):
                     errors.append("Unresolved setting in " + name + ": " + key)
-                if name == "PROJECT.md":
+                if path == base / "AGENTS/PROJECT/PROJECT_CONFIG.md":
                     settings[key] = value
                 else:
                     coding_settings.add(key)
+        if path == base / "AGENTS/PROJECT/PROJECT_CONFIG.md":
+            try:
+                settings_paths.append(project_coding_path(base, settings.get("Project coding rules", "")))
+            except ValueError as exc:
+                errors.append(str(exc))
 
     for key in ("Languages, runtimes and versions", "Source/API/test paths and generated code policy",
                 "Architecture, error, lifetime, concurrency and security invariants",
@@ -123,15 +149,15 @@ def diagnose(workspace, code_worktree=None):
                 "Lint/format commands", "Required platforms, configurations and pre-review checks",
                 "Reviewer output directories and resource requirements"):
         if key not in coding_settings:
-            errors.append("Missing CODING.md setting: " + key)
+            errors.append("Missing project coding setting: " + key)
 
     mandatory = ("Project purpose", "Platforms and public compatibility guarantees", "Repository file language",
                  "Workspace root", "Layout", "Shared Git directory", "Worktree parent", "AGENT_BASE",
                  "Integration branch", "Authoritative remote", "Release branches", "Sensitive and generated paths",
-                 "Shared resources and constraints", "Multi-machine distribution and backup")
+                 "Shared resources and constraints", "Multi-machine distribution and backup", "Project coding rules")
     for key in mandatory:
         if key not in settings:
-            errors.append("Missing PROJECT.md setting: " + key)
+            errors.append("Missing PROJECT/PROJECT_CONFIG.md setting: " + key)
     for key, expected in (("Workspace root", root), ("AGENT_BASE", base), ("Shared Git directory", common)):
         value = settings.get(key, "")
         if value and "Not configured" not in value:

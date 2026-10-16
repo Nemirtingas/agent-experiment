@@ -2,11 +2,13 @@
 
 ## Read only what is needed
 
-Paths use canonical AGENT_BASE; sources use assigned code worktree. Read PROJECT.md and local AGENTS_custom.md
+Paths use canonical AGENT_BASE; sources use assigned code worktree. Read PROJECT.md, its PROJECT/PROJECT_CONFIG.md and local AGENTS_custom.md
 if present, then assigned ROLES files, all under AGENTS/ except preferences. Read-only answers need no role.
 
-- Planner: PLANS/TEMPLATE.md and CODING.md verification/platform sections; inspect referenced sources.
-- Developer/Reviewer: CODING.md, supplied task record and pinned validated plan; Reviewer also REVIEW.json.
+- Planner: PLANS/TEMPLATE.md, CODING.md and the referenced project coding file's verification/platform sections;
+  inspect referenced sources.
+- Developer/Reviewer: CODING.md and the project coding file referenced by PROJECT/PROJECT_CONFIG.md, supplied task record and
+  pinned validated plan; Reviewer also REVIEW.json.
 - Lead: PLANS/README.md to coordinate; WORKFLOW.md before Git; EXECUTION.md and HANDOFF.json to create/resume state;
   plan template to evaluate drafts. Compact Lead also reads Planner role/settings. ADAPTER.md is conditional.
 
@@ -22,6 +24,10 @@ relevant hashes on resume; reconcile drift with Lead. If canonical plan moved/ch
   Runtime records stay outside both histories.
 - User goals and validated acceptance define scope. Do not invent requirements or repeat granted approvals.
   Lead resolves scope conflicts. Settings/preferences cannot weaken invariants or explicit instructions.
+- Keep AGENTS/PROJECT.md and AGENTS/CODING.md generic and unchanged for project work. Configure
+  AGENTS/PROJECT/PROJECT_CONFIG.md and its referenced project files; all project-specific agent settings belong under AGENTS/PROJECT/.
+- Before implementing a plan, obtain the user's provider/model/effort choice using PLANS/README.md's execution
+  model selection procedure. Reuse an explicit choice covering that plan; never silently inherit the current model.
 - Preserve unrelated work and compatibility unless authorized. Implementation requires independent review;
   authors never approve themselves. Optional findings do not expand scope.
 - Cite evidence; label assumptions, unavailable checks and waivers. Exclude secrets/private configuration and

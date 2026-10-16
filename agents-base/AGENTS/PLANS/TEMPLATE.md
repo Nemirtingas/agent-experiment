@@ -28,7 +28,8 @@ in these same sections, not omitted acceptance or verification. Use None for gen
 ## Verification
 
 <A1 -> command, code working directory, environment/platform, expected result and evidence.
-Use configured CODING.md commands, verify their sources, explain unavailable checks; do not assume a waiver.>
+Use commands from the project coding file referenced by PROJECT/PROJECT_CONFIG.md, following CODING.md's shared rules.
+Verify command sources and explain unavailable checks; do not assume a waiver.>
 
 ## Risks and handoff
 

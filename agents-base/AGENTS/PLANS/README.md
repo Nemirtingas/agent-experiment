@@ -36,6 +36,38 @@ Scope/criteria changes: pause affected work, next numbered pending proposal from
 validated content intact until renewed approval; replace it in promotion commit, retaining old content in Git.
 Refresh identity/dependent context; recheck grants against scope. Within-scope fixes use review, not a new plan.
 
+## Choose the execution model
+
+When the user requests implementation of a plan, ask which provider, exact model and reasoning effort to use
+before implementation starts or is delegated. This applies to compact and full routes. Reuse an explicit choice
+already covering this plan; ask only for missing settings. Plan validation or "implement it" alone does not select
+a model. Read-only inspection needed to prepare the choices may continue while waiting; silence is not a choice.
+
+Offer both Claude (Anthropic) and Codex (OpenAI). Discover available models and supported effort values from the
+engine's provider/model catalog, including configured custom models; consult ADAPTER.md for discovery/dispatch.
+Use the engine's exposed capabilities, not external websites or online provider APIs, to prepare this choice.
+Reuse catalog information already available in the session; refresh it when missing or when availability changes.
+Show exact model IDs and only supported effort values. Mark unavailable providers/models and unknown or
+non-configurable effort explicitly; do not invent equivalences, silently substitute models, or imply that selecting
+a model changes the current session automatically. Before dispatch, verify that the chosen settings are supported.
+If execution cannot use them, explain the limitation and obtain a revised choice before starting.
+
+Present a concise comparison in the user's language: provider, model, supported efforts and suitability for the task.
+Recommend one exact provider/model/effort combination and explain briefly how it fits the plan's complexity,
+uncertainty, scope and verification needs. For a small, well-understood change, favor a capable model with a lower
+supported effort. For broad changes, difficult debugging, concurrency or compatibility risks, favor stronger
+reasoning and a higher supported effort. These are task-based judgments, not fixed equivalences across providers;
+state uncertainty when the available model information does not support a confident comparison.
+
+Wait for the user's choice; the recommendation is not authorization to start. Ask together with any still-missing
+execution decision to avoid redundant approval rounds. Reuse an explicit choice already covering the task.
+
+Record the chosen provider instance, exact model, effort, scope and decision source in the task's adapter and
+authorizations fields. Apply the choice to implementation; independent review retains its own role/settings unless
+the user also selected them. Reuse the recorded choice on resume; ask again only when the user changes it, its scope
+does not cover the work, or the selected configuration is no longer available. Existing validation, independent
+review, integration and publication requirements still apply.
+
 ## Execute, review, integrate
 
 Persist transitions/next action: Drafting, Awaiting Validation, Not Selected, Ready, In Progress, In Review, Reviewed,
