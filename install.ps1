@@ -326,6 +326,10 @@ switch ($Command) {
     'install' {
         Install-Skills $Arguments $Copy.IsPresent $projectDir
         if (-not $NoBin -and -not $projectDir) { Install-Commands $AddToPath.IsPresent }
+        if (-not $projectDir) {
+            Write-Output 'next: in your agent, "Use the workflow-setup skill" records how much quota your subscriptions'
+            Write-Output '      leave (low or high); until then the workflow assumes low'
+        }
     }
     'uninstall' { Uninstall-Skills $Arguments $projectDir }
     'project' { Initialize-Project (@($Arguments) | Select-Object -First 1) $Base }

@@ -98,6 +98,10 @@ do_install() {
 		printf 'commands plan-lifecycle and resource-lock linked into %s\n' "$bin"
 		case :$PATH: in *":$bin:"*) ;; *) printf 'note: %s is not on PATH\n' "$bin" ;; esac
 	fi
+	if [ -z "$project" ]; then
+		printf 'next: in your agent, "Use the workflow-setup skill" records how much quota your subscriptions\n'
+		printf '      leave (low or high); until then the workflow assumes low\n'
+	fi
 }
 
 do_uninstall() {

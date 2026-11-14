@@ -1,8 +1,9 @@
-# <Plan title>
+# <plan-id>: <Plan title>
 
-- Plan ID: `<type>_<plan-name>`
+- Plan ID: `<plan-id>`
 - Type: `<fix|feature|docs>`
 - Status: pending
+- Mode: automatic
 
 ## User goal
 
@@ -10,8 +11,9 @@
 
 ## Repository context
 
-<Only what the Developer cannot cheaply rediscover: invariants, observations on shared test resources with their
-date, decisions already taken. Name files and symbols, not line numbers. Distinguish facts from assumptions.>
+<Only what the Developers cannot cheaply rediscover: invariants, observations on shared test resources with
+their date, decisions already taken. Name files and symbols, not line numbers. Distinguish facts from
+assumptions.>
 
 ## Requirements and acceptance criteria
 
@@ -35,17 +37,25 @@ date, decisions already taken. Name files and symbols, not line numbers. Disting
 - Assumptions: <assumptions and evidence, or `None`>
 - Open questions: <decisions needed before validation, or `None`>
 
-## Implementation steps
+## Tasks
 
-1. <Ordered step saying what changes and where, not the code. Name likely files only when repository inspection
-   supports it.>
-2. <Next step>
+<The units run in this order, one agent each. A task too large for one agent and one review pass is split into
+slices; the details of each unit are in its own file, seeded with `plan-lifecycle task`.>
+
+- Task1: <what the task delivers>
+  - Task1a: <what the slice delivers> (<tier>, <effort>, review <yes|no>)
+  - Task1b: <what the slice delivers> (<tier>, <effort>, review <yes|no>)
+- Task2: <what the task delivers> (<tier>, <effort>, review <yes|no>)
 
 ## Verification
 
-- Commands: <repository-supported commands and expected result, or explain why none apply>
-- Test resources: <checks to run on a shared resource before review and who runs them, or `None`>
-- Acceptance evidence: <what the Developer must report to the Reviewer>
+- Unit tests: every unit that adds or changes behavior brings its own; see each unit file.
+- Integration test: <the test that exercises the change end to end across its units, the acceptance criteria it
+  covers and the unit that writes it; or why the change has nothing to integrate>
+- Validation by the Lead: <what the Lead runs and observes on the finished branch before the merge: the
+  commands, the integration test, each acceptance criterion as the user would see it>
+- Test resources: <checks to run on a shared resource before the merge and who runs them, or `None`>
+- Final review: <yes|no, with the reason when no>
 
 ## Risks and compatibility constraints
 
@@ -53,4 +63,4 @@ date, decisions already taken. Name files and symbols, not line numbers. Disting
 
 ## Handoff notes
 
-<Important details for the Developer and Reviewer not stated above, or `None`>
+<Important details for the Developers and Reviewers not stated above, or `None`>

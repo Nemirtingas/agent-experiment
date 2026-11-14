@@ -6,15 +6,22 @@ and applies to every repository that adopts it.
 
 What it gives you:
 
-- Two paths for a change. The light path for small changes: the Lead implements, one independent review, merge,
-  one report, no question in between. The plan path for everything else: a plan file written by a Planner,
-  validated by the user, implemented by a Developer, reviewed, merged.
-- Four roles as skills: Lead, Planner, Developer, Reviewer. Any agent can take any role; the Reviewer is meant to
-  run on another model or provider than the implementer when the harness offers one.
+- One path for every change. The Lead clarifies the request with the user until nothing is ambiguous, a Planner
+  writes a plan and splits it into tasks, and into slices when a task is too large, the user validates it, one
+  agent implements each task or slice, the Lead validates the result and merges.
+- A model and an effort matched to each task: three tiers, `light`, `standard` and `heavy`, mapped to Haiku,
+  Sonnet and Opus for Claude and to Luna, Terra and Sol for Codex. Fable and Astra only when the user asks.
+- Tests at three levels, always: unit tests written with each task, one integration test per plan, and a
+  validation run by the Lead on the finished branch.
+- Reviews where they pay: a Reviewer on another model or provider checks the tasks and the plans the Planner
+  marked, according to the risk and to the quota the user recorded. On an entry subscription (Claude Pro,
+  ChatGPT Plus) the workflow starts fewer agents and reviews only what is risky.
+- Four roles as skills: Lead, Planner, Developer, Reviewer. Any agent can take any role.
 - One task branch and one worktree per change, created and removed by the `plan-lifecycle` command. The plan
-  file lives on the task branch and is merged with the code, so the integration branch keeps every plan.
-- A durable review record: the merge commit message names the plan or brief, the Reviewer's `Reviewed-by` line
-  and the verification that was run.
+  folder lives on the task branch and is merged with the code, so the integration branch keeps every plan, its
+  tasks and their evidence.
+- A durable record: each task has an evidence file, and the merge commit message names the plan, the Lead's
+  validation and the Reviewer's `Reviewed-by` line when there was a review.
 - `resource-lock`, an exclusive lock on shared test resources, visible from every worktree and every agent.
 
 ## Contents
@@ -26,11 +33,12 @@ agent-workflow/
 ├── install.ps1                    the same from PowerShell, for Windows
 ├── .claude-plugin/plugin.json     the directory is also a Claude Code plugin
 ├── skills/
-│   ├── workflow-lead/SKILL.md     entry point: choose the path, drive the roles, merge, report
-│   ├── workflow-planner/SKILL.md  write the plan file on the task branch
-│   ├── workflow-developer/SKILL.md
-│   ├── workflow-reviewer/SKILL.md
-│   ├── plan-lifecycle/            SKILL.md, scripts/plan.sh, assets/PLAN.md (plan template)
+│   ├── workflow-lead/SKILL.md     entry point: clarify, drive the roles, validate, merge, report
+│   ├── workflow-planner/SKILL.md  write the plan and split it into tasks and slices
+│   ├── workflow-developer/SKILL.md  implement one task or slice with its unit tests
+│   ├── workflow-reviewer/SKILL.md   review one task or slice, or the whole change
+│   ├── workflow-setup/SKILL.md    the quota form: low or high, per provider
+│   ├── plan-lifecycle/            SKILL.md, scripts/plan.sh, assets/ (plan, task and evidence templates)
 │   └── resource-lock/             SKILL.md, scripts/lock.sh
 └── templates/AGENTS.md            the per-repository instruction file to fill in
 ```
@@ -52,7 +60,7 @@ git clone https://github.com/Nemirtingas/agent-experiment.git ~/agent-workflow  
 ~/agent-workflow/install.sh install
 ```
 
-This links the six skills into `~/.agents/skills` (read by Codex and OpenCode) and `~/.claude/skills` (read by
+This links the seven skills into `~/.agents/skills` (read by Codex and OpenCode) and `~/.claude/skills` (read by
 Claude Code and OpenCode), and links the commands `plan-lifecycle` and `resource-lock` into `~/.local/bin`.
 Check that `~/.local/bin` is on your `PATH`, then:
 
@@ -60,6 +68,24 @@ Check that `~/.local/bin` is on your `PATH`, then:
 plan-lifecycle help
 resource-lock help
 ```
+
+Then record your quota, once per machine and again whenever your subscription changes. In your agent:
+
+```text
+Use the workflow-setup skill.
+```
+
+It asks which providers you use and whether each subscription leaves a `low` quota (Claude Pro, ChatGPT Plus,
+any plan whose limits you reach in a working session) or a `high` one (Claude Max, ChatGPT Pro, usage billing),
+and stores the answer in your global git configuration. The same thing by hand:
+
+```sh
+plan-lifecycle quota claude low
+plan-lifecycle quota codex high
+plan-lifecycle quota              # show what is recorded
+```
+
+Until a quota is recorded the workflow assumes `low`, so that it stays usable on any subscription.
 
 Options:
 
@@ -106,9 +132,10 @@ Run once in a checkout of the integration branch:
 It copies `templates/AGENTS.md` to the repository root when there is none, creates `docs/plans/.gitkeep`, and
 records the base branch in the repository's git config (`workflow.base`). Then:
 
-1. Fill in every `<placeholder>` of `AGENTS.md`: what the repository is, build and test commands, layout and
-   invariants, style, shared test resources and their lock names, production hosts, secrets rules, the changes
-   that always take the plan path. Keep it under about 200 lines; the roles and the procedure are in the skills.
+1. Fill in every `<placeholder>` of `AGENTS.md`: what the repository is, build commands, unit and integration
+   test commands and conventions, layout and invariants, style, shared test resources and their lock names,
+   production hosts, secrets rules, the changes that are always reviewed. Keep it under about 200 lines; the
+   roles and the procedure are in the skills.
 2. If the repository already has an `AGENTS.md`, merge the `## Workflow` section of the template into it. If it
    has a `CLAUDE.md`, add a line `@AGENTS.md` to it: Claude Code reads `AGENTS.md` on its own only when no
    `CLAUDE.md` is present.
@@ -117,7 +144,7 @@ records the base branch in the repository's git config (`workflow.base`). Then:
 Settings, all optional, stored with `plan-lifecycle config <key> <value>`:
 
 - `base`: the integration branch. Without it every command needs the base branch as an argument.
-- `plans`: the plan directory, default `docs/plans`.
+- `plans`: the directory of the plan folders, default `docs/plans`.
 - `worktrees`: where task worktrees are created. Default: next to the main checkout, or, when the repository is a
   bare `<dir>/.git`, inside `<dir>`. The second layout keeps every worktree of a repository under one directory:
 
@@ -138,62 +165,123 @@ Start every task by giving the request to the Lead:
 Use the workflow-lead skill. <the request>
 ```
 
-The Lead reads `AGENTS.md`, runs `plan-lifecycle status`, and says which path applies.
+The Lead reads `AGENTS.md`, runs `plan-lifecycle status` and `plan-lifecycle quota`, then:
 
-Light path, a change of about fifty lines in one or two files with no public interface, install path, security
-gate or data format involved:
+1. Clarifies. It restates the request as a brief and, when a decision that could change the result is open,
+   asks its questions in one message, each with a recommendation, until nothing is ambiguous. A clear request
+   gets no question.
+2. Plans. `plan-lifecycle propose feature <name>` creates the branch, the worktree and the plan folder. The
+   Planner, with the `workflow-planner` skill, inspects the code, writes the plan (behavior and acceptance, not
+   code), splits it into tasks, and into slices when a task is too large for one agent, and gives each one a
+   tier, an effort, its unit tests and a review decision.
+3. Gets the plan validated. The Lead presents the plan and the list of tasks with the model each will run on;
+   the user validates the content and chooses the mode, `automatic` by default.
+   `plan-lifecycle validate feature <name> [mode]` records both. The validation authorizes the implementation.
+4. Implements, one agent per task or slice, one at a time, in the order of the plan. Each Developer, with the
+   `workflow-developer` skill, implements its unit with its unit tests, fills the unit's evidence file and
+   commits. When the unit is marked for review, a Reviewer with the `workflow-reviewer` skill checks it. The
+   Lead closes the unit with `plan-lifecycle close feature <name> <n> [slice]`.
+5. Validates. The Lead itself runs the repository's commands and the plan's integration test on the finished
+   branch, and observes each acceptance criterion as the user would. When the plan asks for a final review, a
+   Reviewer reads the whole diff.
+6. Merges and reports once. `plan-lifecycle merge feature/<name>` marks the plan `finished`, merges, and
+   removes the branch and worktree. The plan folder is now on the integration branch, next to the code it
+   describes.
 
-1. The Lead states the brief: goal, files, acceptance, verification.
-2. `plan-lifecycle branch fix <name>` creates `fix/<name>` and its worktree; the Lead implements, commits and
-   verifies there.
-3. The Lead delegates the review to another agent with the `workflow-reviewer` skill, fixes `Required` findings,
-   resubmits until the `Reviewed-by` line.
-4. `plan-lifecycle merge fix/<name>` with the message on stdin merges with `--no-ff` and removes the branch and
-   worktree.
-5. One report. The request was the authorization; nothing was asked in between.
+A small change takes the same path: its plan has one task.
 
-Plan path, everything else:
+### Modes
 
-1. `plan-lifecycle propose feature <name>` creates the branch, the worktree and `docs/plans/feature_<name>.md`
-   with `Status: pending`. The Planner, with the `workflow-planner` skill, inspects the code, writes the plan
-   (behavior and acceptance, not code, under about 150 lines) and commits it on the task branch.
-2. The Lead presents the plan; the user validates its content. `plan-lifecycle validate feature <name>` sets
-   `Status: validated` and commits.
-3. The validation authorizes the implementation. The Lead asks one question only for what it leaves open: the
-   order when several plans wait, and local integration when the validation did not mention it.
-4. The Developer, with the `workflow-developer` skill, implements on the task branch, runs the verification and
-   the checks on shared test resources under `resource-lock`, and hands the diff and the evidence to the Lead.
-5. The Reviewer, with the `workflow-reviewer` skill, reviews each pass; the last one ends with the `Reviewed-by`
-   line.
-6. `plan-lifecycle merge feature/<name>` marks the plan `finished`, merges, and removes the branch and worktree.
-   The plan file is now on the integration branch, next to the code it describes.
+The user always validates the plan. What follows depends on the mode chosen at that moment:
 
-To change a validated plan, the Planner edits it in place with a dated `Amendment` note, sets its status back to
-`pending`, and the user validates again.
+- `automatic`, the default: the Lead runs every task and slice, its validation, the final review when there is
+  one and the local merge, without asking, and reports once. Answer "do not merge" to keep the branch for
+  yourself at the end. Nothing is ever pushed.
+- `interactive`: the Lead stops after each task or slice, before closing it, and after its validation, before
+  the merge, shows what was done and waits for your agreement.
+
+Switch at any time by telling the Lead; it records the change with `plan-lifecycle mode feature <name> <mode>`.
+In both modes the Lead stops when the plan needs an amendment, when a decision that could change the result
+appears, or when a usage limit interrupts the work.
+
+### The plan folder
+
+Every plan is a milestone: `plan-lifecycle propose` numbers it, and its folder is `M<number>_<name>`. The
+branch stays `feature/<name>`. A slice is named by its task and a letter, so a unit reads `M3 Task1b`.
+
+```text
+docs/plans/
+└── M3_login/                          one folder per plan: milestone number and name
+    ├── M3_login.md                    the plan: goal, acceptance, scope, task list, verification
+    ├── Task1/                         a task split into slices
+    │   ├── Task1a/
+    │   │   ├── Task1a.md              what the agent implements: goal, files, acceptance, tests
+    │   │   └── Task1a_evidence.md     what it did and ran, and the review if there was one
+    │   └── Task1b/
+    │       ├── Task1b.md
+    │       └── Task1b_evidence.md
+    └── Task2/                         a small task
+        ├── Task2.md
+        └── Task2_evidence.md
+```
+
+`plan-lifecycle task feature login 1 a` seeds `Task1a` from the templates; `plan-lifecycle task feature login 2`
+seeds `Task2`. Statuses: a plan goes `pending`, `validated`, `finished`; a task or slice goes `todo`, `done`.
+
+### Models, effort and quota
+
+| Tier | For | Claude | Codex |
+| --- | --- | --- | --- |
+| `light` | mechanical, fully specified work | Haiku | Luna |
+| `standard` | ordinary implementation in existing patterns | Sonnet | Terra |
+| `heavy` | design choices, concurrency, security, data formats, cross-component changes | Opus | Sol |
+
+Effort is `low`, `medium` or `high`. Fable and Astra, and efforts above `high`, are used only at the user's
+request. Developers run on the Lead's provider; a Reviewer runs on the other provider when the harness offers
+it and its quota is not lower.
+
+| | `low` quota | `high` quota |
+| --- | --- | --- |
+| Planner | `standard` tier | `heavy` tier |
+| Split | whole tasks, slices only when needed | slices small enough to review well |
+| Review of a task | only where a mistake is costly and tests would not show it | every task except trivial ones |
+| Final review | one; none when every task is `light` | one, `heavy` tier |
+
+The tests do not depend on the quota. For one change the user can always say "review everything" or "no
+review".
+
+### Amendments and the merge message
+
+To change a validated plan, its task list included, the Planner edits it in place with a dated `Amendment`
+note, sets its status back to `pending`, and the user validates again.
 
 The merge message, always on stdin:
 
 ```sh
-plan-lifecycle merge fix/<name> <<'MSG'
+plan-lifecycle merge feature/<name> <<'MSG'
 Merge the <what>
 
-<plan ID or brief>
+<plan ID>
+Validated-by: Lead <provider/model>; <what was run and observed>
 Reviewed-by: <provider/model>, pass <n>: approved; verified <what was run>
-<verification run, shared resources included>
 MSG
 ```
 
+Without a final review, the last line is `Not reviewed: <reason>`.
+
+### Delegation
+
 Delegation works with whatever the harness offers: a subagent, a delegated task, a second session, another
-provider. The Lead gives each delegate the role skill name, the brief or plan path, the worktree, the base
-revision and, for the Reviewer, the verification output. A delegate prompt looks like:
+provider. The Lead gives each delegate the role skill name, the model and effort, the unit file or plan path,
+the worktree and, for the Reviewer, the revision the diff starts from. A delegate prompt looks like:
 
 ```text
-Use the workflow-reviewer skill. Brief: <...>. Worktree: /path/to/fix_name, branch fix/name, base develop at
-<revision>. Verification output follows. Review read-only and end with the Reviewed-by line or the number of
-open Required findings.
+Use the workflow-developer skill. Unit: docs/plans/M3_login/Task1/Task1a/Task1a.md, plan
+docs/plans/M3_login/M3_login.md. Worktree: /path/to/feature_login, branch feature/login. Implement
+this unit only, with its unit tests, fill its evidence file, commit and report the commit range.
 ```
 
-Shared test resources:
+### Shared test resources and status
 
 ```sh
 resource-lock take <resource>      # before deploying or testing on it
@@ -201,16 +289,20 @@ resource-lock release <resource>   # before handing off
 resource-lock status
 ```
 
-Resume or inspect at any time with `plan-lifecycle status`: every task branch, its plan status, whether its
-worktree is clean, and its position relative to the base. A branch shown as `merged, drop it` is removed with
-`plan-lifecycle drop <branch>`.
+Resume or inspect at any time with `plan-lifecycle status`: every task branch, its plan status, its tasks and
+slices done out of the total, whether its worktree is clean, and its position relative to the base. A branch
+shown as `merged, drop it` is removed with `plan-lifecycle drop <branch>`.
 
 ## Safety rules built into the commands
 
-- `branch`, `propose` and `merge` fetch the base branch's upstream and fast-forward it; when the two sides have
-  diverged they stop and leave the reconciliation to a human-reviewed merge.
-- `merge` refuses a pending plan, a dirty base worktree and a missing message. A conflicting merge is aborted and
-  the base worktree left clean; the task branch is kept.
+- `propose` and `merge` fetch the base branch's upstream and fast-forward it; when the two sides have diverged
+  they stop and leave the reconciliation to a human-reviewed merge.
+- `task` works only in a pending plan: the task list of a validated plan changes through an amendment.
+- `close` refuses an evidence file the Developer did not fill, uncommitted work, and, for a task marked for
+  review, an evidence file without a `Reviewed-by` line.
+- `merge` refuses a branch without a plan, a pending plan, a plan with a task that is not done, a dirty base
+  worktree and a missing message. A conflicting merge is aborted and the base worktree left clean; the task
+  branch is kept.
 - `drop` removes only a branch that is an ancestor of the base, and never a worktree with uncommitted changes.
 - Nothing is pushed, forced, rebased or reset. Pushing is a separate, explicit decision.
 
@@ -218,6 +310,8 @@ worktree is clean, and its position relative to the base. A branch shown as `mer
 
 - Project rules go in the repository's `AGENTS.md`, not in the skills. The skills read it and refer to it.
 - To change the procedure for everyone, edit the kit, commit, and let the links follow. Keep skill names stable:
-  the repositories' `AGENTS.md` files refer to them.
+  the repositories' `AGENTS.md` files refer to them. The tier table and the quota rules are in
+  `skills/workflow-lead/SKILL.md`; the templates of the plan, task and evidence files are in
+  `skills/plan-lifecycle/assets/`.
 - A harness-specific layer (Claude Code hooks that block `git add -A`, subagent definitions, OpenCode agents)
   can be added next to the skills without changing them; the skills do not depend on it.

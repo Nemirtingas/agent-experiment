@@ -4,22 +4,22 @@
 
 ## Workflow
 
-This repository uses the agent workflow. Start every task with the `workflow-lead` skill; it chooses between the
-light path and the plan path and drives the other roles. Task branches, plan files and integration merges go
-through the `plan-lifecycle` command, never by hand. Shared test resources are used under the `resource-lock`
-command.
+This repository uses the agent workflow. Start every task with the `workflow-lead` skill; it clarifies the
+request, has a plan written and split into tasks, and drives one agent per task. Task branches, plan folders
+and integration merges go through the `plan-lifecycle` command, never by hand. Shared test resources are used
+under the `resource-lock` command.
 
 - Base branch: `<integration branch, also recorded with plan-lifecycle config base>`
-- Plan files: `docs/plans/` (`plan-lifecycle config plans` to change)
+- Plan folders: `docs/plans/<plan ID>/` (`plan-lifecycle config plans` to change)
 - Task worktrees: `<directory that receives them, default: the directory above the main worktree>`
-- Reviewer: <another provider or model than the implementer when the harness offers one, or `any`>
-- Always the plan path: <changes that never take the light path: public interfaces, install paths, security
-  gates, data formats, ... or `None beyond the skill's defaults`>
+- Always reviewed: <changes a Reviewer checks whatever the user's quota: public interfaces, install paths,
+  security gates, data formats, ... or `None beyond the skill's defaults`>
 
 ## Build, test, lint
 
 - Build: `<command>`
-- Tests: `<command and where the test conventions are documented>`
+- Unit tests: `<command, where they live and the conventions a new test follows>`
+- Integration tests: `<command, where they live and what they need to run, or None yet>`
 - Lint or format: `<command, or None>`
 - A fresh worktree lacks: `<submodules, generated files, local configuration to copy, or Nothing>`
 
@@ -47,4 +47,5 @@ command.
 
 - Language of files, code, comments, commits and documentation: English unless stated otherwise here.
 - Commit summaries: imperative, no prefix, at most 72 characters; body explains what was wrong, why, how it
-  changed and how it was verified, wrapped at 72 columns except trailer lines such as `Reviewed-by`.
+  changed and how it was verified, wrapped at 72 columns except trailer lines such as `Validated-by` and
+  `Reviewed-by`.

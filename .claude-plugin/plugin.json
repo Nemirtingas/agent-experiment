@@ -1,5 +1,5 @@
 {
   "name": "agent-workflow",
-  "description": "Light path and plan path for code changes: task worktrees, roles, one independent review, merge with a review record, resource locks.",
-  "version": "0.1.0"
+  "description": "Plan-driven code changes with coding agents: a clarified request, a plan split into tasks and slices, one agent per task on a model matched to its difficulty and to the user's quota, tests at three levels, optional reviews, merge with a durable record, resource locks.",
+  "version": "0.2.0"
 }
